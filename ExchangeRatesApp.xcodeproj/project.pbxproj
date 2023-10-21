@@ -29,7 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		3C3ED8262AE4810F00580FEB /* RatesFluctuationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RatesFluctuationView.swift; path = ../../../../../RatesFluctuationView.swift; sourceTree = "<group>"; };
+		3C3ED8262AE4810F00580FEB /* RatesFluctuationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RatesFluctuationView.swift; sourceTree = "<group>"; };
 		3C3ED8282AE48D8300580FEB /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		3C6BD3CB2AE341AF00713AF9 /* ExchangeRatesApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExchangeRatesApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3C6BD3CE2AE341AF00713AF9 /* ExchangeRatesAppApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRatesAppApp.swift; sourceTree = "<group>"; };
