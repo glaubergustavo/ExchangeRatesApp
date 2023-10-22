@@ -25,7 +25,7 @@ extension Fluctuation {
 }
 
 class FluctuationViewModel: ObservableObject {
-    @Published var fluctuation: [Fluctuation] = Fluctuation.samples
+    @Published var fluctuations: [Fluctuation] = Fluctuation.samples
 }
 
 struct RatesFluctuationView: View {
@@ -35,9 +35,9 @@ struct RatesFluctuationView: View {
     
     var searchResult: [Fluctuation] {
         if searchText.isEmpty {
-            return viewModel.fluctuation
+            return viewModel.fluctuations
         } else {
-            return viewModel.fluctuation.filter { $0.symbol.contains(searchText.uppercased()) ||
+            return viewModel.fluctuations.filter { $0.symbol.contains(searchText.uppercased()) ||
                 $0.change.formatter(decimalPlaces: 4).contains(searchText.uppercased()) ||
                 $0.changePct.toPercentage().contains(searchText.uppercased()) ||
                 $0.endRate.formatter(decimalPlaces: 2).contains(searchText.uppercased())
@@ -127,23 +127,25 @@ struct RatesFluctuationView: View {
     
     private var ratesFluctuationListView: some View {
         List(searchResult) { fluctuation in
-            VStack {
-                HStack(alignment: .center, spacing: 8) {
-                    Text("\(fluctuation.symbol) / BRL")
-                        .font(.system(size: 14, weight: .medium))
-                    Text("\(fluctuation.endRate.formatter(decimalPlaces: 2))")
-                        .font(.system(size: 14, weight: .bold))
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                    Text("\(fluctuation.change.formatter(decimalPlaces: 4, with: true))")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(fluctuation.change.color)
-                    Text("(\(fluctuation.changePct.toPercentage()))")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(fluctuation.changePct.color)
+            NavigationLink(destination: RateFluctuationDetailView(baseCurrency: "BRL", rateFluctuation: fluctuation)) {
+                VStack {
+                    HStack(alignment: .center, spacing: 8) {
+                        Text("\(fluctuation.symbol) / BRL")
+                            .font(.system(size: 14, weight: .medium))
+                        Text("\(fluctuation.endRate.formatter(decimalPlaces: 2))")
+                            .font(.system(size: 14, weight: .bold))
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                        Text("\(fluctuation.change.formatter(decimalPlaces: 4, with: true))")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(fluctuation.change.color)
+                        Text("(\(fluctuation.changePct.toPercentage()))")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(fluctuation.changePct.color)
+                    }
+                    Divider()
+                        .padding(.leading, -20)
+                        .padding(.trailing, -40)
                 }
-                Divider()
-                    .padding(.leading, -20)
-                    .padding(.trailing, -40)
             }
             .listRowSeparator(.hidden)
             .listRowBackground(Color.white)
