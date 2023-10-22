@@ -7,4 +7,10 @@
 
 import Foundation
 
-typealias CurrencySymbolObject = [String : String]
+struct CurrencySymbolObject: Codable {
+    var base: String?
+    var success: Bool = false
+    var symbols: SymbolObject?
+}
+
+typealias SymbolObject = [String : String]

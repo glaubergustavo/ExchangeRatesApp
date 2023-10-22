@@ -7,37 +7,27 @@
 
 import Foundation
 
-protocol RatesStoreProtocol {
-    func fetchFluctuation(by base: String, from symbols: [String], startDate: String, endDate: String) async throws -> RatesFluctuationObject
-    func fetchTimeseries(by base: String, from symbol: String, startDate: String, endDate: String) async throws -> RatesHistoricalObject
+protocol RatesStoreProtocol: GenericStoreProtocol {
+    func fetchFluctuation(by base: String, from symbols: [String], startDate: String, endDate: String, completion: @escaping completion<RateObject<RatesFluctuationObject>?>)
+    func fetchTimeseries(by base: String, from symbol: String, startDate: String, endDate: String, completion: @escaping completion<RateObject<RatesHistoricalObject>?>)
 }
 
-class RatesStore: BaseStore, RatesStoreProtocol {
+class RatesStore: GenericStoreRequest, RatesStoreProtocol {
     
-    func fetchFluctuation(by base: String, from symbols: [String], startDate: String, endDate: String) async throws -> RatesFluctuationObject {
+    func fetchFluctuation(by base: String, from symbols: [String], startDate: String, endDate: String, completion: @escaping completion<RateObject<RatesFluctuationObject>?>) {
         
-        guard let urlRequest = try RatesRouter.fluctuation(baseCoin: base, symbols: symbols, startDate: startDate, endDate: endDate).asUrlRequest() else {
-            throw error
+        guard let urlRequest = RatesRouter.fluctuation(baseCoin: base, symbols: symbols, startDate: startDate, endDate: endDate).asUrlRequest() else {
+            return completion(nil, error)
         }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        guard let rates = try RateResult<RatesFluctuationObject>(data: data, response: response).rates else {
-            throw error
-        }
-        return rates
+        request(urlRequest: urlRequest, completion: completion)
     }
     
-    func fetchTimeseries(by base: String, from symbol: String, startDate: String, endDate: String) async throws -> RatesHistoricalObject {
+    func fetchTimeseries(by base: String, from symbol: String, startDate: String, endDate: String, completion: @escaping completion<RateObject<RatesHistoricalObject>?>) {
         
-        guard let urlRequest = try RatesRouter.timeseries(baseCoin: base, symbol: symbol, startDate: startDate, endDate: endDate).asUrlRequest() else {
-            throw error
+        guard let urlRequest = RatesRouter.timeseries(baseCoin: base, symbol: symbol, startDate: startDate, endDate: endDate).asUrlRequest() else {
+            return completion(nil, error)
         }
-        
-        let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        guard let rates = try RateResult<RatesHistoricalObject>(data: data, response: response).rates else {
-            throw error
-        }
-        return rates
+        request(urlRequest: urlRequest, completion: completion)
     }
     
     

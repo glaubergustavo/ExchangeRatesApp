@@ -19,7 +19,7 @@ enum CurrencyRouter {
     }
     
     
-    func asUrlRequest() throws -> URLRequest? {
+    func asUrlRequest() -> URLRequest? {
         guard var url = URL(string: RatesApi.baseUrl) else { return nil }
         
         switch self {

@@ -13,7 +13,7 @@ struct RateFluctuationDetailView: View {
     @StateObject var viewModel = ViewModel()
     
     @State var baseCurrency: String
-    @State var rateFluctuation: RateFluctuationModel
+    @State var fromCurrency: String
     @State private var isPresentedBaseCurrencyFilter = false
     
     var body: some View {
@@ -24,20 +24,20 @@ struct RateFluctuationDetailView: View {
         }
         .navigationTitle(viewModel.titile)
         .onAppear {
-            viewModel.startStateView(baseCurrency: baseCurrency, rateFluctuation: rateFluctuation, timeRange: .today)
+            viewModel.startStateView(baseCurrency: baseCurrency, fromCurrency: fromCurrency, timeRange: .today)
         }
     }
     
     private var valuesView: some View {
         HStack(alignment: .center, spacing: 8) {
             Text(viewModel.endRate.formatter(decimalPlaces: 4))
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 22, weight: .bold))
             Text(viewModel.changePct.toPercentage(with: true))
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(rateFluctuation.changePct.color)
-                .background(rateFluctuation.changePct.color.opacity(0.2))
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(viewModel.changePct.color)
+                .background(viewModel.changePct.color.opacity(0.2))
             Text(viewModel.change.formatter(decimalPlaces: 4, with: true))
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(viewModel.change.color)
             Spacer()
         }
@@ -203,6 +203,6 @@ extension RateFluctuationDetailView: BaseCurrencyFilterViewDelegate {
 
 struct RateFluctuationDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        RateFluctuationDetailView(baseCurrency: "BRL", rateFluctuation: RateFluctuationModel(symbol: "EUR", change: 0.0003, changePct: 0.1651, endRate: 0.181353))
+        RateFluctuationDetailView(baseCurrency: "BRL", fromCurrency: "USD")
     }
 }
