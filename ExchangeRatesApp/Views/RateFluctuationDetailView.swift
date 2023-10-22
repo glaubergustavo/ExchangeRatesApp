@@ -8,63 +8,12 @@
 import SwiftUI
 import Charts
 
-struct ChartComparation: Identifiable, Equatable {
-    let id = UUID()
-    var symbol: String
-    var period: Date
-    var endRate: Double
-}
-
-class RateFluctuationViewModel: ObservableObject {
-    @Published var fluctuations: [Fluctuation] = [
-        Fluctuation(symbol: "JPY", change: 0.0008, changePct: 0.0005, endRate: 0.007242),
-        Fluctuation(symbol: "EUR", change: 0.0003, changePct: 0.1651, endRate: 0.181353),
-        Fluctuation(symbol: "GBP", change: -0.0001, changePct: -0.0403, endRate: 0.158915)
-    ]
-    
-    @Published var chartComparation: [ChartComparation] = [
-        ChartComparation(symbol: "USD", period: "2022-11-13".toDate(), endRate: 0.29292),
-        ChartComparation(symbol: "USD", period: "2022-11-12".toDate(), endRate: 0.018262),
-        ChartComparation(symbol: "USD", period: "2022-11-11".toDate(), endRate: 0.035242),
-        ChartComparation(symbol: "USD", period: "2022-11-10".toDate(), endRate: 0.054242)
-    ]
-    
-    @Published var timeRange = TimeRangeEnum.today
-    
-    var hasRates: Bool {
-        return chartComparation.filter { $0.endRate > 0 }.count > 0
-    }
-    
-    var yAxisMin: Double {
-        let min = chartComparation.map { $0.endRate }.min() ?? 0.0
-        return (min - (min * 0.02))
-    }
-    
-    var yAxisMax: Double {
-        let max = chartComparation.map { $0.endRate }.max() ?? 0.0
-        return (max - (max * 0.02))
-    }
-    
-    func xAxisLabelFormatStyle(for date: Date) -> String {
-        switch timeRange {
-        case .today:
-            return date.formatter(to: "HH:mm")
-        case .thisWeek, .thisMonth:
-            return date.formatter(to: "dd, MMM")
-        case .thisSemester:
-            return date.formatter(to: "MMM")
-        case .thisYear:
-            return date.formatter(to: "MMM, YYYY")
-        }
-    }
-}
-
 struct RateFluctuationDetailView: View {
     
-    @StateObject var viewModel = RateFluctuationViewModel()
+    @StateObject var viewModel = ViewModel()
     
     @State var baseCurrency: String
-    @State var rateFluctuation: Fluctuation
+    @State var rateFluctuation: RateFluctuationModel
     @State private var isPresentedBaseCurrencyFilter = false
     
     var body: some View {
@@ -73,20 +22,23 @@ struct RateFluctuationDetailView: View {
             graphicChartView
             comparationView
         }
-        .navigationTitle("BRL a USD")
+        .navigationTitle(viewModel.titile)
+        .onAppear {
+            viewModel.startStateView(baseCurrency: baseCurrency, rateFluctuation: rateFluctuation, timeRange: .today)
+        }
     }
     
     private var valuesView: some View {
         HStack(alignment: .center, spacing: 8) {
-            Text(rateFluctuation.endRate.formatter(decimalPlaces: 4))
+            Text(viewModel.endRate.formatter(decimalPlaces: 4))
                 .font(.system(size: 28, weight: .bold))
-            Text(rateFluctuation.changePct.toPercentage(with: true))
+            Text(viewModel.changePct.toPercentage(with: true))
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(rateFluctuation.changePct.color)
                 .background(rateFluctuation.changePct.color.opacity(0.2))
-            Text(rateFluctuation.change.formatter(decimalPlaces: 4, with: true))
+            Text(viewModel.change.formatter(decimalPlaces: 4, with: true))
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(rateFluctuation.change.color)
+                .foregroundColor(viewModel.change.color)
             Spacer()
         }
         .padding(.init(top: 8, leading: 8, bottom: 8, trailing: 8))
@@ -102,7 +54,7 @@ struct RateFluctuationDetailView: View {
     }
     
     private var lineChartView: some View {
-        Chart(viewModel.chartComparation) { item in
+        Chart(viewModel.ratesHistorical) { item in
             LineMark(
                 x: .value("Period", item.period),
                 y: .value("Rates", item.endRate)
@@ -119,7 +71,7 @@ struct RateFluctuationDetailView: View {
             }
         }
         .chartXAxis {
-            AxisMarks(preset: .aligned) { date in
+            AxisMarks(preset: .aligned, values: .stride(by: viewModel.xAxisStride, count: viewModel.xAxisStrideCount)) { date in
                 AxisGridLine()
                 AxisValueLabel(viewModel.xAxisLabelFormatStyle(for: date.as(Date.self) ?? Date()))
             }
@@ -155,14 +107,15 @@ struct RateFluctuationDetailView: View {
         .fullScreenCover(isPresented: $isPresentedBaseCurrencyFilter, content: {
             BaseCurrencyFilterView()
         })
+        .opacity(viewModel.ratesFluctuation.count == 0 ? 0 : 1)
     }
     
     private var comparationScrollView: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHGrid(rows: [GridItem(.flexible())], alignment: .center) {
-                ForEach(viewModel.fluctuations) { fluctuation in
+                ForEach(viewModel.ratesFluctuation) { fluctuation in
                     Button {
-                        print("Comparação")
+                        viewModel.doComparation(with: fluctuation)
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(fluctuation.symbol) / \(baseCurrency)")
@@ -195,51 +148,61 @@ struct RateFluctuationDetailView: View {
     private var periodFilterView: some View {
         HStack(spacing: 16) {
             Button {
-                print("1 dia")
+                viewModel.doFetchData(from: .today)
             } label: {
                 Text("1 dia")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.blue)
-                    .underline()
+                    .foregroundColor(viewModel.timeRange == .today ? .blue : .gray)
+                    .underline(viewModel.timeRange == .today)
             }
             
             Button {
-                print("7 dias")
+                viewModel.doFetchData(from: .thisWeek)
             } label: {
                 Text("7 dias")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray)
+                    .foregroundColor(viewModel.timeRange == .thisWeek ? .blue : .gray)
+                    .underline(viewModel.timeRange == .thisWeek)
             }
             
             Button {
-                print("1 mês")
+                viewModel.doFetchData(from: .thisMonth)
             } label: {
                 Text("1 mês")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray)
+                    .foregroundColor(viewModel.timeRange == .thisMonth ? .blue : .gray)
+                    .underline(viewModel.timeRange == .thisMonth)
             }
             
             Button {
-                print("6 mêses")
+                viewModel.doFetchData(from: .thisSemester)
             } label: {
                 Text("6 mêses")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray)
+                    .foregroundColor(viewModel.timeRange == .thisSemester ? .blue : .gray)
+                    .underline(viewModel.timeRange == .thisSemester)
             }
             
             Button {
-                print("1 ano")
+                viewModel.doFetchData(from: .thisYear)
             } label: {
                 Text("1 ano")
                     .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray)
+                    .foregroundColor(viewModel.timeRange == .thisYear ? .blue : .gray)
+                    .underline(viewModel.timeRange == .thisYear)
             }
         }
     }
 }
 
+extension RateFluctuationDetailView: BaseCurrencyFilterViewDelegate {
+    func didSelected(_ baseCurrency: String) {
+        viewModel.doFilter(by: baseCurrency)
+    }
+}
+
 struct RateFluctuationDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        RateFluctuationDetailView(baseCurrency: "BRL", rateFluctuation: Fluctuation(symbol: "EUR", change: 0.0003, changePct: 0.1651, endRate: 0.181353))
+        RateFluctuationDetailView(baseCurrency: "BRL", rateFluctuation: RateFluctuationModel(symbol: "EUR", change: 0.0003, changePct: 0.1651, endRate: 0.181353))
     }
 }

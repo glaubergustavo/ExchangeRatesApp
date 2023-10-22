@@ -10,7 +10,7 @@ import Foundation
 enum RatesRouter {
     
     case fluctuation(baseCoin: String, symbols: [String], startDate: String, endDate: String)
-    case timeseries(baseCoin: String, symbols: [String], startDate: String, endDate: String)
+    case timeseries(baseCoin: String, symbol: String, startDate: String, endDate: String)
     
     var path: String {
         switch self {
@@ -33,11 +33,11 @@ enum RatesRouter {
                 URLQueryItem(name: "start_date", value: startDate),
                 URLQueryItem(name: "end_date", value: endDate)
             ])
-        case .timeseries(let baseCoin, let symbols, let startDate, let endDate):
+        case .timeseries(let baseCoin, let symbol, let startDate, let endDate):
             url.append(queryItems: [
                 URLQueryItem(name: "access_key", value: RatesApi.apiKey),
                 URLQueryItem(name: "base", value: baseCoin),
-                URLQueryItem(name: "symbols", value: symbols.joined(separator: ",")),
+                URLQueryItem(name: "symbol", value: symbol),
                 URLQueryItem(name: "start_date", value: startDate),
                 URLQueryItem(name: "end_date", value: endDate)
             ])
