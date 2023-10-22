@@ -31,7 +31,10 @@ class FluctuationViewModel: ObservableObject {
 struct RatesFluctuationView: View {
     
     @StateObject var viewModel = FluctuationViewModel()
-    @State private var  searchText = ""
+    
+    @State private var searchText = ""
+    @State private var isPresentedBaseCurrencyFilter = false
+    @State private var isPresentedMultCurrenciesFilter = false
     
     var searchResult: [Fluctuation] {
         if searchText.isEmpty {
@@ -55,9 +58,12 @@ struct RatesFluctuationView: View {
             .navigationTitle("Conversão de Moedas").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 Button {
-                    print("Filtrar Moedas")
+                    isPresentedMultCurrenciesFilter.toggle()
                 } label: {
                     Image(systemName: "slider.horizontal.3")
+                }
+                .fullScreenCover(isPresented: $isPresentedMultCurrenciesFilter) {
+                    MultiCurrenciesFilterView()
                 }
             }
         }
@@ -66,17 +72,20 @@ struct RatesFluctuationView: View {
     private var baseCurrencyPeriodFilterView: some View {
         HStack(alignment: .center, spacing: 16) {
             Button {
-                print("Filtrar Moedas")
+                isPresentedBaseCurrencyFilter.toggle()
             } label: {
                 Text("BRL")
                     .font(.system(size: 14, weight: .bold))
                     .padding(.init(top: 4, leading: 8, bottom: 4, trailing: 8))
                     .foregroundColor(.white)
-                    .overlay {
+                    .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(.white, lineWidth: 1)
-                    }
+                    )
             }
+            .fullScreenCover(isPresented: $isPresentedBaseCurrencyFilter, content: {
+                BaseCurrencyFilterView()
+            })
             .background(Color(UIColor.lightGray))
             .cornerRadius(8)
             
@@ -151,10 +160,6 @@ struct RatesFluctuationView: View {
             .listRowBackground(Color.white)
         }
         .listStyle(.plain)
-    }
-    
-    private func fontColor() {
-        
     }
 }
 
